@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -9,118 +8,135 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model account {
-  id                  String  @id @db.VarChar(36)
-  user_id             String? @db.VarChar(36)
-  type                String? @db.VarChar(50)
-  provider            String? @db.VarChar(50)
-  provider_account_id String? @unique @db.VarChar(255)
-  refresh_token       String?
-  access_token        String?
-  expires_at          Int?
-  token_type          String? @db.VarChar(50)
-  scope               String? @db.VarChar(255)
-  id_token            String?
-  session_state       String? @db.VarChar(255)
-  user                user?   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
-model category {
-  id         String    @id @db.VarChar(36)
-  name       String    @db.VarChar(100)
-  color      String?   @default("#60B1F7") @db.VarChar(7)
-  user_id    String?   @db.VarChar(36)
-  created_at DateTime? @default(now()) @db.Timestamp(6)
-  user       user?     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  task       task[]
+model Category {
+  id        String    @id @db.VarChar(36)
+  name      String    @db.VarChar(100)
+  color     String?   @default("#60B1F7") @db.VarChar(7)
+  userId    String?   @map("user_id") @db.VarChar(36)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  task      Task[]
+
+  @@map("categories")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model notification {
+model Notification {
   id                        String                      @id @db.VarChar(36)
-  task_id                   String?                     @db.VarChar(36)
+  taskId                    String?                     @map("task_id") @db.VarChar(36)
   type                      String?                     @db.VarChar(2)
-  send_at                   DateTime                    @db.Timestamp(6)
+  sendAt                    DateTime                    @map("send_at") @db.Timestamp(6)
   title                     String                      @db.VarChar(255)
   message                   String
   read                      Boolean?                    @default(false)
-  read_at                   DateTime?                   @db.Timestamp(6)
-  created_at                DateTime?                   @default(now()) @db.Timestamp(6)
-  task                      task?                       @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  notification_delivery_log notification_delivery_log[]
+  readAt                    DateTime?                   @map("read_at") @db.Timestamp(6)
+  createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamp(6)
+  task                      Task?                       @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  notification_delivery_log NotificationDeliveryLog[]
+
+  @@map("notifications")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model notification_delivery_log {
-  id                String             @id @db.VarChar(36)
-  notification_id   String?            @db.VarChar(36)
-  subscription_id   String?            @db.VarChar(36)
-  delivery_channel  String?            @db.VarChar(3)
-  status            String?            @db.VarChar(2)
-  error_message     String?
-  sent_at           DateTime?          @db.Timestamp(6)
-  delivered_at      DateTime?          @db.Timestamp(6)
-  clicked_at        DateTime?          @db.Timestamp(6)
-  created_at        DateTime?          @default(now()) @db.Timestamp(6)
-  notification      notification?      @relation(fields: [notification_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  push_subscription push_subscription? @relation(fields: [subscription_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model NotificationDeliveryLog {
+  id               String             @id @db.VarChar(36)
+  notificationId   String?            @map("notification_id") @db.VarChar(36)
+  subscriptionId   String?            @map("subscription_id") @db.VarChar(36)
+  deliveryChannel  String?            @map("delivery_channel") @db.VarChar(3)
+  status           String?            @db.VarChar(2)
+  errorMessage     String?            @map("error_message")
+  sentAt           DateTime?          @map("sent_at") @db.Timestamp(6)
+  deliveredAt      DateTime?          @map("delivered_at") @db.Timestamp(6)
+  clickedAt        DateTime?          @map("clicked_at") @db.Timestamp(6)
+  createdAt        DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
+  notification     Notification?      @relation(fields: [notificationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pushSubscription PushSubscription?  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("notification_delivery_logs")
 }
 
-model push_subscription {
+model PushSubscription {
   id                        String                      @id @db.VarChar(36)
-  user_id                   String?                     @db.VarChar(36)
+  userId                    String?                     @map("user_id") @db.VarChar(36)
   endpoint                  String                      @unique
   p256dh                    String
   auth                      String
-  user_agent                String?                     @db.VarChar(500)
-  is_active                 Boolean?                    @default(true)
-  created_at                DateTime?                   @default(now()) @db.Timestamp(6)
-  last_used_at              DateTime?                   @default(now()) @db.Timestamp(6)
-  notification_delivery_log notification_delivery_log[]
-  user                      user?                       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  userAgent                 String?                     @map("user_agent") @db.VarChar(500)
+  isActive                  Boolean?                    @default(true) @map("is_active")
+  createdAt                 DateTime?                   @default(now()) @map("created_at") @db.Timestamp(6)
+  lastUsedAt                DateTime?                   @default(now()) @map("last_used_at") @db.Timestamp(6)
+  notification_delivery_log NotificationDeliveryLog[]
+  user                      User?                       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("push_subscriptions")
 }
 
-model session {
-  id            String    @id @db.VarChar(36)
-  session_token String?   @unique @db.VarChar(255)
-  user_id       String?   @db.VarChar(36)
-  expires       DateTime? @db.Timestamp(6)
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
-  user          user?     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model Session {
+  id           String    @id @db.VarChar(36)
+  sessionToken String?   @unique @map("session_token") @db.VarChar(255)
+  userId       String?   @map("user_id") @db.VarChar(36)
+  expires      DateTime? @db.Timestamp(6)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("sessions")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model task {
-  id           String         @id @db.VarChar(36)
-  title        String         @db.VarChar(255)
-  description  String?
-  due_date     DateTime?      @db.Timestamp(6)
-  quadrant     String?        @default("B") @db.VarChar(2)
-  position     Int?           @default(0)
-  completed    Boolean?       @default(false)
-  completed_at DateTime?      @db.Timestamp(6)
-  user_id      String?        @db.VarChar(36)
-  category_id  String?        @db.VarChar(36)
-  created_at   DateTime?      @default(now()) @db.Timestamp(6)
-  updated_at   DateTime?      @default(now()) @db.Timestamp(6)
-  notification notification[]
-  category     category?      @relation(fields: [category_id], references: [id], onUpdate: NoAction)
-  user         user?          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model Task {
+  id          String         @id @db.VarChar(36)
+  title       String         @db.VarChar(255)
+  description String?
+  dueDate     DateTime?      @map("due_date") @db.Timestamp(6)
+  quadrant    String?        @default("B") @db.VarChar(2)
+  position    Int?           @default(0)
+  completed   Boolean?       @default(false)
+  completedAt DateTime?      @map("completed_at") @db.Timestamp(6)
+  userId      String?        @map("user_id") @db.VarChar(36)
+  categoryId  String?        @map("category_id") @db.VarChar(36)
+  createdAt   DateTime?      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime?      @updatedAt @map("updated_at") @db.Timestamp(6)
+  notification Notification[]
+  category    Category?      @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
+  user        User?          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("tasks")
 }
 
-model user {
-  id                       String              @id @db.VarChar(36)
-  name                     String?             @db.VarChar(255)
-  email                    String              @unique @db.VarChar(255)
-  email_verified           DateTime?           @db.Timestamp(6)
-  image                    String?             @db.VarChar(500)
-  notification_enabled     Boolean?            @default(true)
-  notification_time_before Int?                @default(24)
-  created_at               DateTime?           @default(now()) @db.Timestamp(6)
-  updated_at               DateTime?           @default(now()) @db.Timestamp(6)
-  account                  account[]
-  category                 category[]
-  push_subscription        push_subscription[]
-  session                  session[]
-  task                     task[]
+model User {
+  id                     String              @id @default(uuid()) @db.VarChar(36)
+  name                   String?             @db.VarChar(255)
+  email                  String              @unique @db.VarChar(255)
+  emailVerified          DateTime?           @map("email_verified") @db.Timestamp(6)
+  image                  String?             @db.VarChar(500)
+  notificationEnabled    Boolean?            @default(true) @map("notification_enabled")
+  notificationTimeBefore Int?                @default(24) @map("notification_time_before")
+  createdAt              DateTime?           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt              DateTime?           @updatedAt @map("updated_at") @db.Timestamp(6)
+  account                Account[]
+  category               Category[]
+  push_subscription      PushSubscription[]
+  session                Session[]
+  task                   Task[]
+
+  @@map("users")
 }
