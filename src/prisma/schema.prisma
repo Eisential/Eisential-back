@@ -28,7 +28,7 @@ model Account {
 }
 
 model Category {
-  id        String    @id @db.VarChar(36)
+  id        String    @id @default(uuid()) @db.VarChar(36)
   name      String    @db.VarChar(100)
   color     String?   @default("#60B1F7") @db.VarChar(7)
   userId    String?   @map("user_id") @db.VarChar(36)
@@ -41,7 +41,7 @@ model Category {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Notification {
-  id                        String                      @id @db.VarChar(36)
+  id                        String                      @id @default(uuid()) @db.VarChar(36)
   taskId                    String?                     @map("task_id") @db.VarChar(36)
   type                      String?                     @db.VarChar(2)
   sendAt                    DateTime                    @map("send_at") @db.Timestamp(6)
@@ -58,7 +58,7 @@ model Notification {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model NotificationDeliveryLog {
-  id               String             @id @db.VarChar(36)
+  id               String             @id @default(uuid()) @db.VarChar(36)
   notificationId   String?            @map("notification_id") @db.VarChar(36)
   subscriptionId   String?            @map("subscription_id") @db.VarChar(36)
   deliveryChannel  String?            @map("delivery_channel") @db.VarChar(3)
@@ -75,7 +75,7 @@ model NotificationDeliveryLog {
 }
 
 model PushSubscription {
-  id                        String                      @id @db.VarChar(36)
+  id                        String                      @id @default(uuid()) @db.VarChar(36)
   userId                    String?                     @map("user_id") @db.VarChar(36)
   endpoint                  String                      @unique
   p256dh                    String
@@ -91,7 +91,7 @@ model PushSubscription {
 }
 
 model Session {
-  id           String    @id @db.VarChar(36)
+  id           String    @id @default(uuid()) @db.VarChar(36)
   sessionToken String?   @unique @map("session_token") @db.VarChar(255)
   userId       String?   @map("user_id") @db.VarChar(36)
   expires      DateTime? @db.Timestamp(6)
@@ -103,7 +103,7 @@ model Session {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Task {
-  id          String         @id @db.VarChar(36)
+  id          String         @id @default(uuid()) @db.VarChar(36)
   title       String         @db.VarChar(255)
   description String?
   dueDate     DateTime?      @map("due_date") @db.Timestamp(6)
@@ -116,7 +116,7 @@ model Task {
   createdAt   DateTime?      @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime?      @updatedAt @map("updated_at") @db.Timestamp(6)
   notification Notification[]
-  category    Category?      @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
+  category    Category?      @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user        User?          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("tasks")

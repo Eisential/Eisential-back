@@ -15,7 +15,7 @@ export async function GET() {
   try {
     const categories = await prisma.category.findMany({
       where: {
-        user_id: userId, // Filtrar por ID
+        userId: userId, // Filtrar por ID
       },
       orderBy: { name: 'asc' },
     });
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         color: color || undefined,
-        user_id: userId, // Asignar el ID del usuario
+        userId: userId // Asignar el ID del usuario
       },
     });
 

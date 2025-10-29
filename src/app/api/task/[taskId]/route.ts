@@ -59,7 +59,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   try {
     // 1. Verificar propiedad de la tarea
     const result = await prisma.task.deleteMany({
-      where: { id: taskId, user_id: userId },
+      where: { id: taskId, userId: userId },
     });
     
     // Si no se eliminó ninguna fila, es porque la tarea no existe o no pertenece al usuario.
