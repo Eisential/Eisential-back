@@ -4,9 +4,9 @@ import { getSession } from '@/lib/auth';
 
 // Obtener todas las tareas (Backlog)
 export async function GET() {
-  const session = await getSession(); // Obtener sesión
+  const session = await getSession(); 
   
-  if (!session?.user?.id) { // Verificar sesión
+  if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
   
@@ -15,9 +15,9 @@ export async function GET() {
   try {
     const tasks = await prisma.task.findMany({
       where: {
-        user_id: userId, // Filtrar por ID
+        userId: userId, // Usar camelCase como define Prisma
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: { category: true },
     });
 
@@ -30,9 +30,9 @@ export async function GET() {
 
 // Crear una nueva tarea (RF2)
 export async function POST(req: NextRequest) {
-  const session = await getSession(); // Obtener sesión
+  const session = await getSession();
   
-  if (!session?.user?.id) { // Verificar sesión
+  if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
   
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { title, description, due_date, category_id, quadrant, position } = body;
+    const { title, description, dueDate, categoryId, quadrant, position } = body;
 
     if (!title) {
       return NextResponse.json({ message: 'Title is required' }, { status: 400 });
@@ -50,12 +50,13 @@ export async function POST(req: NextRequest) {
       data: {
         title,
         description,
-        due_date: due_date ? new Date(due_date) : null,
-        user_id: userId, // Asignar el ID del usuario
-        category_id: category_id || undefined,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        userId: userId,
+        categoryId: categoryId || null,
         quadrant: quadrant || 'B',
         position: position || 0,
       },
+      include: { category: true }, // Incluir categoría en la respuesta
     });
 
     return NextResponse.json(newTask, { status: 201 });
