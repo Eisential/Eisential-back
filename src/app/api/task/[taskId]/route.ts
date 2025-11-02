@@ -6,6 +6,14 @@ interface Params {
   params: { taskId: string };
 }
 
+function ValidarCuadrante (q?: unknown){
+
+  if (q === undefined || q === null ) return;
+  if (q !== 'A' && q !== 'B' && q !== 'C' && q !== 'D'){
+    throw new Error('El cuadrante debe ser A, B, C o D o ninguno');
+}
+
+
 // Para verificar si la tarea pertenece al usuario
 async function checkTaskOwnership(taskId: string, userId: string) {
     const task = await prisma.task.findUnique({
@@ -40,6 +48,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       },
     });
 
+    ValidarCuadrante(body.quadrant);
+    
+
     return NextResponse.json(updatedTask);
   } catch (error) {
     console.error(`Error updating task ${taskId}:`, error);
@@ -72,4 +83,5 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     console.error(`Error deleting task ${taskId}:`, error);
     return NextResponse.json({ message: 'Failed to delete task' }, { status: 500 });
   }
+}
 }
